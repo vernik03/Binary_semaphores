@@ -30,10 +30,8 @@ public class Forest {
         Bee(){ }
 
         public void run(){
-            synchronized (bear) {
-                while (true) {
-                    pot.addHoney();
-                }
+            while (true) {
+                pot.addHoney();
             }
         }
     }
@@ -68,6 +66,7 @@ public class Forest {
             }
             value++;
             System.out.println("Bee added 1 honey");
+            notify();
         }
 
         public synchronized void clearPot(){
@@ -80,6 +79,7 @@ public class Forest {
             }
             value = 0;
             System.out.println("Bear ate all honey");
+            notify();
         }
     }
 }
