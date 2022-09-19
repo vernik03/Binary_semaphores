@@ -14,7 +14,6 @@ public class Forest {
 
         pot = new Pot();
 
-
         bear = new Bear();
         new Thread(bear).start();
 
@@ -33,17 +32,7 @@ public class Forest {
         public void run(){
             synchronized (bear) {
                 while (true) {
-                    if (!pot.isFull()) {
-                        pot.addHoney();
-                        System.out.println("Bee added 1 honey");
-                        try {
-                            sleep(300);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        bear.notify();
-                    }
+                    pot.addHoney();
                 }
             }
         }
@@ -56,34 +45,41 @@ public class Forest {
         }
         public void run(){
             while (true) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                if (pot.isFull()) {
-                    pot.clearPot();
-                    System.out.println("Bear ate all honey");
-                }
+                pot.clearPot();
             }
         }
     }
 
     class Pot{
-        private int pot;
-        final int max_pot = 10;
-        public Pot(){
-            clearPot();
-        }
-        public boolean isFull(){
-            return pot >= max_pot;
-        }
-        public void addHoney(){
-            this.pot++;
-        }
-        public void clearPot(){
-            this.pot = 0;
+        private int value;
+        private int max;
+        Pot(){
+            this.max = 10;
+            value = 0;
         }
 
+        public synchronized void addHoney(){
+            while (value == this.max){
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            value++;
+            System.out.println("Bee added 1 honey");
+        }
+
+        public synchronized void clearPot(){
+            while (value < this.max){
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            value = 0;
+            System.out.println("Bear ate all honey");
+        }
     }
 }
