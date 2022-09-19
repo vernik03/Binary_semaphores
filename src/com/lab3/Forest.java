@@ -65,7 +65,7 @@ public class Forest {
                 }
             }
             value++;
-            System.out.println("Bee added 1 honey");
+            System.out.println("Bee added 1 honey. Pot value: " + value);
             notify();
         }
 
