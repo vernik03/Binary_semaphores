@@ -65,7 +65,10 @@ public class Barbershop {
                 sleep(1000);
                 notify();
                 System.out.println ("постриг");
+                sleep(200);
+                clients.remove();
                 sem.release();
+
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
