@@ -10,7 +10,6 @@ import static java.lang.Thread.sleep;
 
 public class Barbershop {
 
-    public Queue<Thread> clients;
     public Barber barber;
     private Semaphore barber_sem;
     private Semaphore client_sem;
@@ -20,17 +19,15 @@ public class Barbershop {
         barber_sem = new Semaphore(0);
         client_sem = new Semaphore(0);
         barber_works = new Semaphore(0);
-        clients = new LinkedList<Thread>();
-        barber = new Barber(barber_sem, client_sem, clients, barber_works);
+        barber = new Barber(barber_sem, client_sem, barber_works);
         new Thread(barber).start();
 
 //        Client client = new Client(barber_sem, client_sem);
 //        new Thread(client).start();
 
-        for (int i = 0; i < 10; i++) {
-            clients.add(new Thread(new Client(barber_sem, client_sem, barber_works)));
-            clients.element().start();
-            System.out.println(clients.size());
+        for (int i = 0; i < 100; i++) {
+            Client client = new Client(barber_sem, client_sem, barber_works);
+            new Thread(client).start();
             Random rand = new Random();
             int int_random = rand.nextInt(1000)+500;
             try {
@@ -47,28 +44,20 @@ class Barber implements Runnable{
     private Semaphore barber_sem;
     private Semaphore client_sem;
     private Semaphore barber_works;
-    public Queue<Thread> clients;
-    Barber(Semaphore barber_sem,Semaphore client_sem, Queue<Thread> clients, Semaphore barber_works) {
+    Barber(Semaphore barber_sem,Semaphore client_sem, Semaphore barber_works) {
         this.barber_sem=barber_sem;
         this.client_sem=client_sem;
         this.barber_works=barber_works;
-        this.clients=clients;
     }
     public void run(){
         while (true) {
             try {
 
                 barber_sem.acquire();
-                if (clients.size() > 0) {
                     client_sem.release();
-                }
                 barber_sem.acquire();
                 hairCutting();
                 client_sem.release();
-                clients.remove();
-                if (clients.size() > 0) {
-                    client_sem.release();
-                }
 //                if (clients.size() > 0) {
 //                    clients.element().client_queue_sem.release();
 //                }
