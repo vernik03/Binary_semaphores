@@ -52,7 +52,7 @@ public class Forest {
         private int value;
         private int max;
         Pot(){
-            this.max = 10;
+            this.max = 100;
             value = 0;
         }
 
