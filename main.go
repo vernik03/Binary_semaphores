@@ -19,7 +19,9 @@ func (s *Semaphore) Acquire() {
 }
 
 func (s *Semaphore) Release() {
-	s.i--
+	if s.isAcquired() {
+		s.i--
+	}
 }
 
 func (s *Semaphore) isAcquired() bool {
@@ -47,59 +49,62 @@ type Agent struct {
 
 func (a *Agent) Put(c chan Sigarette, sem *Semaphore, sem_agent *Semaphore) {
 	sem.Acquire()
-	fmt.Println("Putting")
 	temp_s := Sigarette{0, 0, 0}
-	for i := 0; i < 2; i++ {
-		elem := rand.Intn(3)
-		switch elem {
-		case 0:
-			temp_s.paper++
-			fmt.Println("Put paper")
-		case 1:
-			temp_s.tobacco++
-			fmt.Println("Put tobacco")
-		case 2:
-			temp_s.matches++
-			fmt.Println("Put matches")
-		}
+	elem := rand.Intn(3)
+	switch elem {
+	case 0:
+		temp_s.tobacco++
+		temp_s.matches++
+		fmt.Println("🤵 Put tobacco and matches")
+	case 1:
+		temp_s.paper++
+		temp_s.matches++
+		fmt.Println("🤵 Put paper and matches")
+	case 2:
+		temp_s.paper++
+		temp_s.tobacco++
+		fmt.Println("🤵 Put paper and tobacco")
 	}
 	c <- temp_s
 	sem.Release()
-	sem_agent.Acquire()
 }
 
 func (s *Smoker) Get(c chan Sigarette, sem *Semaphore, sem_agent *Semaphore) {
 	
-	fmt.Println("Smoker is checking sigarette")
+	
+	fmt.Println("🔬 Checking sigarette")
 	temp := <-c
-	if temp.paper > 0 && s.paper == 0 {
+	if temp.paper == 0 && s.paper > 0 {
+		sem.Acquire()
+		fmt.Println("🚬 Get tobacco and matches 🔵")
 		s.paper++
-	} else if temp.tobacco > 0 && s.tobacco == 0 {
+		s.Smoke(sem)
+	} else if temp.tobacco == 0 && s.tobacco > 0 {
+		sem.Acquire()
+		fmt.Println("🚬 Get paper and matches 🟢")
 		s.tobacco++
-	} else if temp.matches > 0 && s.matches == 0 {
+		s.Smoke(sem)
+	} else if temp.matches == 0 && s.matches > 0 {
+		sem.Acquire()
+		fmt.Println("🚬 Get paper and tobacco 🟡")
 		s.matches++
+		s.Smoke(sem)
 	}else {
 		c <- temp
 	}
-	
-	sem.Acquire()
-	if s.Check() {
-		s.Smoke()
-	}
-	sem.Release()
-	sem_agent.Release()
 }
 
 func (s *Smoker) Check() bool {
 	return s.paper > 0 && s.tobacco > 0 && s.matches > 0
 }
 
-func (s *Smoker) Smoke() {
-	fmt.Println("Smoker is smoking")
+func (s *Smoker) Smoke(sem *Semaphore) {
+	fmt.Println("🚬 Smoking")
 	s.paper--
 	s.tobacco--
 	s.matches--
 	time.Sleep(1000 * time.Millisecond)
+	sem.Release()
 }
 
 func (s *Smoker) LifeOfSmoker(c chan Sigarette, sem *Semaphore, sem_agent *Semaphore) {
