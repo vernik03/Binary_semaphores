@@ -8,26 +8,32 @@ import java.util.concurrent.Semaphore;
 
 import static java.lang.Thread.sleep;
 
+class  i{
+    public static int i=0;
+}
+
 public class Barbershop {
 
+    public static Integer queue = 0;
+
+    public Queue<Thread> clients;
     public Barber barber;
     private Semaphore barber_sem;
     private Semaphore client_sem;
-    private Semaphore barber_works;
+    private Semaphore client_queue_sem;
 
     Barbershop() {
         barber_sem = new Semaphore(0);
         client_sem = new Semaphore(0);
-        barber_works = new Semaphore(0);
-        barber = new Barber(barber_sem, client_sem, barber_works);
+        client_queue_sem = new Semaphore(1);
+        barber = new Barber(barber_sem, client_sem, client_queue_sem);
         new Thread(barber).start();
 
-//        Client client = new Client(barber_sem, client_sem);
-//        new Thread(client).start();
-
-        for (int i = 0; i < 100; i++) {
-            Client client = new Client(barber_sem, client_sem, barber_works);
+        for (int i = 0; i < 10; i++) {
+            Client client = new Client(barber_sem, client_sem, client_queue_sem);
             new Thread(client).start();
+            queue++;
+            System.out.println(queue + " клієнтів в черзі 🟦");
             Random rand = new Random();
             int int_random = rand.nextInt(1000)+500;
             try {
@@ -43,27 +49,21 @@ class Barber implements Runnable{
 
     private Semaphore barber_sem;
     private Semaphore client_sem;
-    private Semaphore barber_works;
+    private Semaphore client_queue_sem;
     Barber(Semaphore barber_sem,Semaphore client_sem, Semaphore barber_works) {
         this.barber_sem=barber_sem;
         this.client_sem=client_sem;
-        this.barber_works=barber_works;
+        this.client_queue_sem=barber_works;
     }
     public void run(){
         while (true) {
             try {
-
-                barber_sem.acquire();
-                    client_sem.release();
                 barber_sem.acquire();
                 hairCutting();
+                Barbershop.queue--;
+                System.out.println(Barbershop.queue + " клієнтів в черзі 🟥");
                 client_sem.release();
-//                if (clients.size() > 0) {
-//                    clients.element().client_queue_sem.release();
-//                }
-//                if (clients.size() <= 1) {
-//                    clients.notify();
-//                }
+                client_queue_sem.release();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -72,15 +72,13 @@ class Barber implements Runnable{
 
     private void hairCutting() throws InterruptedException {
 
-        barber_works.release();
-        System.out.println ("Б: Начинает стричь");
+        System.out.println ("Б: Починає стригти");
         try {
             sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         System.out.println ("Б: Постриг");
-        barber_works.acquire();
     }
 
 }
@@ -90,49 +88,24 @@ class Client implements Runnable{
 
     public Semaphore barber_sem;
     public Semaphore client_sem;
-    public Semaphore barber_works;
+    public Semaphore client_queue_sem;
 
     Client(Semaphore barber_sem,Semaphore client_sem, Semaphore barber_works) {
         this.barber_sem=barber_sem;
         this.client_sem=client_sem;
-        this.barber_works=barber_works;
+        this.client_queue_sem=barber_works;
     }
 
     public void run(){
         try {
-            if (barber_works.availablePermits() == 0) {
-                barber_sem.release();
-            }
-            client_sem.acquire();
-
-//            System.out.println ("К: Пришёл клиент и ждёт");
-//            if (client_queue_sem.availablePermits() < 0) {
-//                System.out.println (" Пришёл клиент и ждёт");
-//                wait();
-//                System.out.println (" Дождался");
-//            }
-//            else {
-//                System.out.println (" Пришёл клиент");
-//            }
+            client_queue_sem.acquire();
             barber_sem.release();
-            System.out.println ("К: Сел в кресло");
+            System.out.println ("К: Сів у крісло");
             client_sem.acquire();
-            System.out.println ("К: Постригся и уходит");
+            System.out.println ("К: Постригся і йде");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        /*if (clients.size() == 1) {
-            try {
-                sem.acquire();
-                System.out.println(" садится в кресло");
-                wait();
-                System.out.println("постригся");
-                sem.release();
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }*/
     }
 }
 
