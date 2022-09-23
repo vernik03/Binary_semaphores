@@ -65,7 +65,7 @@ public class Forest {
                 }
             }
             value++;
-            System.out.println("Bee added 1 honey. Pot value: " + value);
+            System.out.println("Bee added honey. 🐝 Pot value: " + value);
             notify();
         }
 
@@ -78,7 +78,7 @@ public class Forest {
                 }
             }
             value = 0;
-            System.out.println("Bear ate all honey");
+            System.out.println("Bear ate all honey 🍯");
             notify();
         }
     }
