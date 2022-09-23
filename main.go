@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	// "os"
 	"time"
 )
 
@@ -47,7 +46,7 @@ type Agent struct {
 	matches int
 }
 
-func (a *Agent) Put(c chan Sigarette, sem *Semaphore, sem_agent *Semaphore) {
+func (a *Agent) Put(c chan Sigarette, sem *Semaphore) {
 	sem.Acquire()
 	temp_s := Sigarette{0, 0, 0}
 	elem := rand.Intn(3)
@@ -65,41 +64,36 @@ func (a *Agent) Put(c chan Sigarette, sem *Semaphore, sem_agent *Semaphore) {
 		temp_s.tobacco++
 		fmt.Println("🤵 Put paper and tobacco")
 	}
+	time.Sleep(500 * time.Millisecond)
 	c <- temp_s
 	sem.Release()
 }
 
-func (s *Smoker) Get(c chan Sigarette, sem *Semaphore, sem_agent *Semaphore) {
+func (s *Smoker) Get(c chan Sigarette, sem *Semaphore, name string) {
 	
-	
-	fmt.Println("🔬 Checking sigarette")
 	temp := <-c
+	fmt.Println("\t🔬 Checking sigarette")
 	if temp.paper == 0 && s.paper > 0 {
 		sem.Acquire()
-		fmt.Println("🚬 Get tobacco and matches 🔵")
+		fmt.Println("🚬 Get tobacco and matches")
 		s.paper++
-		s.Smoke(sem)
+		s.Smoke(sem, name)
 	} else if temp.tobacco == 0 && s.tobacco > 0 {
 		sem.Acquire()
-		fmt.Println("🚬 Get paper and matches 🟢")
+		fmt.Println("🚬 Get paper and matches")
 		s.tobacco++
-		s.Smoke(sem)
+		s.Smoke(sem, name)
 	} else if temp.matches == 0 && s.matches > 0 {
 		sem.Acquire()
-		fmt.Println("🚬 Get paper and tobacco 🟡")
+		fmt.Println("🚬 Get paper and tobacco")
 		s.matches++
-		s.Smoke(sem)
+		s.Smoke(sem, name)
 	}else {
 		c <- temp
 	}
 }
-
-func (s *Smoker) Check() bool {
-	return s.paper > 0 && s.tobacco > 0 && s.matches > 0
-}
-
-func (s *Smoker) Smoke(sem *Semaphore) {
-	fmt.Println("🚬 Smoking")
+func (s *Smoker) Smoke(sem *Semaphore, name string) {
+	fmt.Println("🚬 Smoking " + name)
 	s.paper--
 	s.tobacco--
 	s.matches--
@@ -107,19 +101,17 @@ func (s *Smoker) Smoke(sem *Semaphore) {
 	sem.Release()
 }
 
-func (s *Smoker) LifeOfSmoker(c chan Sigarette, sem *Semaphore, sem_agent *Semaphore) {
+func (s *Smoker) LifeOfSmoker(c chan Sigarette, sem *Semaphore, name string) {
 	for {
 		time.Sleep(time.Millisecond)
-		// fmt.Println("LifeOfSmoker")
-        s.Get(c, sem, sem_agent);
+        s.Get(c, sem, name);
 	}
 }
 
-func (s *Agent) LifeOfAgent(c chan Sigarette, sem *Semaphore, sem_agent *Semaphore) {
+func (s *Agent) LifeOfAgent(c chan Sigarette, sem *Semaphore) {
 	for {
 		time.Sleep(time.Millisecond)
-		// fmt.Println("LifeOfAgent")
-        s.Put(c, sem, sem_agent);
+        s.Put(c, sem);
 	}
 }
 
@@ -130,37 +122,14 @@ func main() {
 	matches := Smoker{0, 0, 1000}
 	agent := Agent{1000, 1000, 1000}
 	semaphore := Semaphore{0}
-	semaphore_agent := Semaphore{0}
 
 	
-	go agent.LifeOfAgent(c, &semaphore, &semaphore_agent)
+	go agent.LifeOfAgent(c, &semaphore)
 
-	go paper.LifeOfSmoker(c, &semaphore, &semaphore_agent)
-	go tobacco.LifeOfSmoker(c, &semaphore, 	 &semaphore_agent)
-	go matches.LifeOfSmoker(c, &semaphore, 	 &semaphore_agent)
+	go paper.LifeOfSmoker(c, &semaphore, "🔵")
+	go tobacco.LifeOfSmoker(c, &semaphore, "🟢")
+	go matches.LifeOfSmoker(c, &semaphore, "🟡")
 
 	finished := make(chan bool)
 	<- finished
-
-	// semaphore := New(1, 1*time.Second)
-
-	// fmt.Println("Начало")
-	// tickets, timeout := 0, 0*time.Second
-	// s := New(tickets, timeout)
-	
-
-	// if err := s.Acquire(); err != nil {
-	// 	if err != ErrNoTickets {
-	// 		panic(err)
-	// 	}
-
-	// 	fmt.Println("Билетов не осталось, не могу работать")
-	// 	os.Exit(1)
-	// }
-	// fmt.Println("Завершение")
-
-    // go greet(c)
-
-    // c <- "John"
-    //fmt.Println("main() stopped")
 }
